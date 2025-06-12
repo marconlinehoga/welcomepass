@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel - RDX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- PDF Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Font Awesome for WhatsApp Icon -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(160deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      min-height: 100vh;
+    }
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 30px 20px;
+      width: 90%;
+      max-width: 350px;
+      text-align: center;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .container img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: 1.2px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    input::placeholder { color: #bbb; }
+    .btn {
+      display: none;
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: linear-gradient(to right, #1b1e2e, #2b2f49);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 100%;
+      background: rgba(0, 180, 255, 0.3);
+      transition: width 0.3s ease;
+      z-index: 0;
+    }
+    .btn.clicked:after { width: 100%; }
+    .btn span { position: relative; z-index: 1; }
+    .error { color: #ff4444; font-size: 14px; margin-top: 10px; }
+    .whatsapp-link {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 14px;
+    }
+    .whatsapp-link a {
+      color: #25D366;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Admin Panel Styling */
+    .admin-container {
+      display: none;
+      padding: 20px;
+    }
+    .entry {
+      background: #fff;
+      color: black;
+      border-radius: 10px;
+      padding: 12px;
+      margin: 12px auto;
+      max-width: 500px;
+    }
+    .field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 8px 0;
+    }
+    .copy-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .admin-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 300px;
+      margin: 20px auto;
+    }
+    button.action-btn {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      color: white;
+    }
+    #logoutBtn { background: darkred; }
+    #downloadPdfBtn { background: green; }
+    #deleteBtn { background: orangered; }
+  </style>
+</head>
+<body>
+
+  <!-- Contact WhatsApp -->
+  <div class="whatsapp-link">
+    <a href="https://wa.me/7668911722" target="_blank">Contact The Developer <i class="fab fa-whatsapp"></i></a>
+  </div>
+
+  <!-- Login UI -->
+  <div class="login-container" id="loginSection">
+    <div class="container">
+      <img src="https://i.ibb.co/bjzjJJRf/fantasy-eye-illustration.jpg" alt="Zero Trace Logo">
+      <div class="title">RDX is back</div>
+      <input type="text" id="username" placeholder="Login ID">
+      <input type="password" id="password" placeholder="Password" oninput="checkPassword()">
+      <button class="btn" onclick="checkLogin(this)"><span>Login</span></button>
+      <div class="error" id="error"></div>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-container" id="adminSection">
+    <div class="admin-buttons">
+      <button id="downloadPdfBtn" class="action-btn">Download as PDF</button>
+      <button id="deleteBtn" class="action-btn">Delete All Data</button>
+      <button id="logoutBtn" class="action-btn">Logout</button>
+    </div>
+    <div id="dataContainer"></div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDih7qIaS1eX68IIsDmAKXxYPtqvo9jLc0",
+      authDomain: "amit-f5b5b.firebaseapp.com",
+      projectId: "amit-f5b5b",
+      storageBucket: "amit-f5b5b.appspot.com",
+      messagingSenderId: "282917580402",
+      appId: "1:282917580402:web:2a97eea5254d59dedb1ceb"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    if (localStorage.getItem("adminLoggedIn") === "true") {
+      showAdminPanel();
+    }
+
+    function checkPassword() {
+      const pass = document.getElementById("password").value;
+      document.querySelector(".btn").style.display = (pass.trim() === "admin1234") ? "block" : "none";
+    }
+
+    function checkLogin(button) {
+      button.classList.add("clicked");
+      setTimeout(() => button.classList.remove("clicked"), 300);
+
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const error = document.getElementById("error");
+
+      if (user === "admin" && pass === "admin4542") {
+        localStorage.setItem("adminLoggedIn", "true");
+        showAdminPanel();
+      } else {
+        error.textContent = "Contact Developer";
+      }
+    }
+
+    function showAdminPanel() {
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("adminSection").style.display = "block";
+      loadData();
+    }
+
+    function logout() {
+      localStorage.removeItem("adminLoggedIn");
+      location.reload();
+    }
+
+    function loadData() {
+      db.collection("alldata-hare")
+        .orderBy("timestamp", "desc")
+        .get()
+        .then(snapshot => {
+          const container = document.getElementById("dataContainer");
+          container.innerHTML = "";
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            let entryHTML = `<div class="entry">`;
+            for (const key in data) {
+              if (key === "timestamp") continue;
+              entryHTML += createField(key, data[key]);
+            }
+            if (data.timestamp) {
+              entryHTML += createField("Time", data.timestamp.toDate().toLocaleString());
+            }
+            entryHTML += `</div>`;
+            container.innerHTML += entryHTML;
+          });
+        });
+    }
+
+    function createField(label, value) {
+      return `
+        <div class="field">
+          <div><strong>${label}:</strong> ${value}</div>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('${value}');alert('Copied: ${value}')">Copy</button>
+        </div>
+      `;
+    }
+
+    document.getElementById("logoutBtn").onclick = logout;
+
+    document.getElementById("deleteBtn").onclick = () => {
+      const pass = prompt("Enter password to delete:");
+      if (pass !== "4542") {
+        alert("Wrong password.");
+        return;
+      }
+      if (confirm("Delete all data?")) {
+        db.collection("alldata45").get().then(snapshot => {
+          const batch = db.batch();
+          snapshot.forEach(doc => batch.delete(doc.ref));
+          return batch.commit();
+        }).then(() => {
+          alert("Data deleted.");
+          loadData();
+        });
+      }
+    };
+
+    document.getElementById("downloadPdfBtn").onclick = () => {
+      const pass = prompt("Enter password to download:");
+      if (pass !== "4542") {
+        alert("Wrong password.");
+        return;
+      }
+      const opt = {
+        margin: 0.5,
+        filename: 'admin-data.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(document.getElementById("dataContainer")).save();
+    };
+  </script>
+</body>
+</html>
