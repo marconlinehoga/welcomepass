@@ -204,7 +204,7 @@
 
     function checkPassword() {
       const pass = document.getElementById("password").value;
-      document.querySelector(".btn").style.display = (pass.trim() === "admin1234") ? "block" : "none";
+      document.querySelector(".btn").style.display = (pass.trim() === "admin4542") ? "block" : "none";
     }
 
     function checkLogin(button) {
@@ -235,7 +235,7 @@
     }
 
     function loadData() {
-      db.collection("alldata-hare")
+      db.collection("alldata4542")
         .orderBy("timestamp", "desc")
         .get()
         .then(snapshot => {
